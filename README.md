@@ -267,7 +267,9 @@ The configuration file is called `projects.json` and it's downloaded using the `
 |                | configuration            |       | Array of *Git* configuration `config` options, repository scope. Add `--global` for global scope *[optional]* |
 |                | branch                   |       | Default branch |
 |                | update                   |       | Whether to force the repository update and reset to latest on the default branch |
+|                | use_classifier           |       | Whether to dynamically add platform/classifier suffix/placeholder to git URL *[optional]* |
 |                | doLast                   |       | Array of shell commands to execute after repository update *[optional]* |
+
 
 
 :memo: Additional notes
@@ -437,6 +439,24 @@ The default implementation is tested on the following platforms:
 - Linux amd64 - Ubuntu
 - Windows amd64 - Git for Windows 64 bit
   - 2.41.0+
+
+#### Classifier
+
+This hook allows to dynamically modify Git URLs using a platform or variant name. By default, it resolves to `linux` or `windows` based on `uname -s`.
+
+```bash
+function user_classifier()
+{
+  # put your code here
+  :
+}
+```
+
+This hook is called with the project name as the first argument (`$1`). You can override this hook with an external script or custom function by setting the `INSTALLER_CLASSIFIER` environment variable:
+
+```bash
+export INSTALLER_CLASSIFIER="/path/to/my_custom_classifier.sh"
+```
 
 ### Commands
 
