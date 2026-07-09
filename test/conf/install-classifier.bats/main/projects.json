@@ -1,0 +1,46 @@
+{
+  "projects": [
+    {
+      "name": "project1",
+      "category": "generic",
+      "default": "true",
+      "use_classifier": true,
+      "urls": {
+        "fetch": "http://localhost:8787/install-classifier.bats/project1.git"
+      },
+      "options": {
+        "clone": "--depth 1"
+      },
+      "branch": "master",
+      "update": "true"
+    },
+    {
+      "name": "project2",
+      "category": "generic",
+      "default": "false",
+      "use_classifier": true,
+      "urls": {
+        "fetch": "http://localhost:8787/install-classifier.bats/project2.git"
+      },
+      "options": {
+        "clone": "--depth 1"
+      },
+      "branch": "master",
+      "update": "true"
+    },
+    {
+      "name": "project3",
+      "category": "generic",
+      "default": "false",
+      "use_classifier": true,
+      "urls": {
+        "fetch": "http://localhost:8787/install-classifier.bats/project3-${classifier}.git"
+      },
+      "options": {
+        "clone": "--depth 1"
+      },
+      "branch": "master",
+      "update": "true"
+    }
+  ]
+}

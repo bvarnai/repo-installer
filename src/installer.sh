@@ -21,6 +21,7 @@ declare -r INSTALLER_LOG_PREFIX="[installer]"
 declare -r INSTALLER_GET_DEPENDENCIES=${INSTALLER_GET_DEPENDENCIES:-'user_get_dependencies'}
 declare -r INSTALLER_LINK=${INSTALLER_LINK:-'user_link'}
 declare -r INSTALLER_UNLINK=${INSTALLER_UNLINK:-'user_unlink'}
+declare -r INSTALLER_CLASSIFIER=${INSTALLER_CLASSIFIER:-'user_classifier'}
 
 #######################################
 # Get user specific tool dependencies such
@@ -115,6 +116,29 @@ function user_unlink()
 }
 
 #######################################
+# User defined classifier hook.
+# Returns a platform classifier string: linux, windows, etc.
+# Arguments:
+#   $1 - the project name
+# Returns:
+#   None (outputs the classifier string to stdout)
+#######################################
+# shellcheck disable=SC2317
+function user_classifier()
+{
+  local system
+  system=$(uname -s)
+  if [[ "${system}" == "Linux" ]]; then
+    echo "linux"
+  elif [[ "${system}" =~ ^(MINGW32|MINGW64|MSYS|CYGWIN) ]]; then
+    echo "windows"
+  else
+    echo "unknown"
+  fi
+}
+
+
+#######################################
 # Displays help.
 # Arguments:
 #   None
@@ -188,9 +212,26 @@ function install_project()
     err "Project fetch URL is not configured"
     exit 1
   fi
-  log "Repository fetch URL '${fetchURL}'"
 
   pushURL=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".urls.push?")
+
+  local useClassifier
+  useClassifier=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".use_classifier?")
+  if [[ "${useClassifier}" == "true" ]]; then
+    if [[ -n "${INSTALLER_CLASSIFIER}" ]]; then
+      local classifier
+      classifier=$($INSTALLER_CLASSIFIER "${project}")
+      if [[ -n "${classifier}" ]]; then
+        fetchURL=$(apply_classifier_to_url "${fetchURL}" "${classifier}")
+        if [[ "${pushURL}" != "null" ]]; then
+          pushURL=$(apply_classifier_to_url "${pushURL}" "${classifier}")
+        fi
+      fi
+    fi
+  fi
+
+  log "Repository fetch URL '${fetchURL}'"
+
   if [[ "${pushURL}" == "null" ]]; then
     # fallback to use the same url
     pushURL="${fetchURL}"
@@ -488,6 +529,32 @@ function precondition_user_confirm_uncommitted()
         * ) echo "Please answer Yy or Nn.";;
       esac
     done
+  fi
+}
+
+#######################################
+# Applies the classifier to a git URL.
+# Arguments:
+#   $1 - the URL
+#   $2 - the classifier
+# Returns:
+#   None (outputs the modified URL to stdout)
+#######################################
+function apply_classifier_to_url()
+{
+  local url="$1"
+  local classifier="$2"
+
+  if [[ "${url}" == *"\${classifier}"* ]]; then
+    # Replace ${classifier} with classifier value
+    echo "${url//\$\{classifier\}/${classifier}}"
+  else
+    # Append classifier before .git or at the end
+    if [[ "${url}" == *.git ]]; then
+      echo "${url%.git}-${classifier}.git"
+    else
+      echo "${url}-${classifier}"
+    fi
   fi
 }
 
