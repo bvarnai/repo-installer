@@ -1435,7 +1435,7 @@ function process_updater_arguments()
 # Arguments:
 #  None
 #######################################
-INSTALLER_SELF="$(pwd)/installer.sh"
+INSTALLER_SELF="${BASH_SOURCE[0]}"
 function updater()
 {
   # globals for update
