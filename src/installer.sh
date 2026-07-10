@@ -168,6 +168,7 @@ function help()
   echo "      --prune                     prune during fetch"; \
   echo "      --git-quiet                 run git commands with '--quite' option"; \
   echo "      --skip-dolast               do not run doLast commands"; \
+  echo "      --skip-drs                  do not configure or fetch DRS repositories"; \
   echo ""; \
   echo "More information visit https://github.com/bvarnai/respository-installer" 1>&2; exit 0;
 }
@@ -184,6 +185,7 @@ function help()
 #   $7 - git --quite option
 #   $8 - git --prune option
 #   $9 - skip doLast
+#   $10 - skip DRS
 # Returns:
 #   None
 #######################################
@@ -198,6 +200,7 @@ function install_project()
   local gitQuiet="$7"
   local gitPrune="$8"
   local skipDoLast="$9"
+  local skipDrs="${10:-0}"
 
   local project
   project=$(echo "${configuration}" | "${INSTALLER_JQ}" -r '.name')
@@ -422,8 +425,68 @@ function install_project()
     popd > /dev/null || exit
   fi
 
+  configure_drs "${path}" "${skipDrs}"
+
   gitConfig "${configuration}"
   doLast "${configuration}" "${skipDoLast}"
+}
+
+#######################################
+# Resolves the path to the DRS src directory.
+# Arguments:
+#   None
+# Returns:
+#   Path to DRS src directory, or empty if not found.
+#######################################
+function resolve_drs_home()
+{
+  if [[ -n "${DRS_HOME:-}" && -d "${DRS_HOME}" ]]; then
+    echo "${DRS_HOME}"
+  else
+    echo ""
+  fi
+}
+
+#######################################
+# Configures and updates DRS if the repository has drs.json.
+# Arguments:
+#   $1 - the path to the repository directory
+#   $2 - skip DRS (0/1)
+# Returns:
+#   None
+#######################################
+function configure_drs()
+{
+  local repo_path="$1"
+  local skip_drs="${2:-0}"
+  if [[ -f "${repo_path}/drs.json" ]]; then
+    if [[ "${skip_drs}" == 1 ]]; then
+      log "Skipping DRS configuration for '${repo_path}'"
+      return
+    fi
+    log "DRS repository detected at '${repo_path}'"
+    local drs_home
+    drs_home=$(resolve_drs_home)
+    if [[ -z "${drs_home}" ]]; then
+      log "drs.json found, but DRS_HOME is not set. Skipping DRS configuration."
+      return
+    fi
+    log "Using DRS_HOME: ${drs_home}"
+    pushd "${repo_path}" > /dev/null || exit
+    
+    # 1. Install/activate aliases locally in this repo
+    log "Activating DRS aliases..."
+    if ! DRS_HOME="${drs_home}" bash "${drs_home}/install.sh"; then
+      err "Failed to activate DRS aliases"
+    fi
+
+    # 2. Get/update the directory contents
+    log "Fetching DRS directory revision..."
+    if ! DRS_HOME="${drs_home}" bash "${drs_home}/get.sh"; then
+      err "Failed to fetch DRS directory revision"
+    fi
+    popd > /dev/null || exit
+  fi
 }
 
 #######################################
@@ -852,6 +915,7 @@ function main()
   local gitQuiet
   local gitPrune
   local skipDoLast
+  local skipDrs
   yes=0
   list=0
   update=0
@@ -867,6 +931,7 @@ function main()
   gitQuiet=0
   gitPrune=0
   skipDoLast=0
+  skipDrs=0
   params=
   while (( "$#" )); do
     case "$1" in
@@ -933,6 +998,10 @@ function main()
         ;;
       --skip-dolast)
         skipDoLast=1
+        shift
+        ;;
+      --skip-drs)
+        skipDrs=1
         shift
         ;;
       --) # end argument parsing
@@ -1087,7 +1156,7 @@ function main()
     # trim name
     projectName=$(echo "${projectName}" | xargs)
     find_project_by_name "${projectName}"
-    install_project "${INSTALLER_LAST_RETURN}" "${projectBranchSet}" "${projectBranch}" "${cloneOptionsSet}" "${cloneOptions}" "${fetchAll}" "${gitQuiet}" "${gitPrune}" "${skipDoLast}"
+    install_project "${INSTALLER_LAST_RETURN}" "${projectBranchSet}" "${projectBranch}" "${cloneOptionsSet}" "${cloneOptions}" "${fetchAll}" "${gitQuiet}" "${gitPrune}" "${skipDoLast}" "${skipDrs}"
   done
 }
 
@@ -1336,6 +1405,9 @@ function process_updater_arguments()
         shift
         ;;
       --skip-dolast) # skip ahead
+        shift
+        ;;
+      --skip-drs) # skip ahead
         shift
         ;;
       --) # end argument parsing

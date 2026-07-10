@@ -283,7 +283,7 @@ The configuration file is called `projects.json` and it's downloaded using the `
 
 ## Usage
 
-Command syntax is the following:
+Command syntax is the following:
 ```bash
 ./installer.sh [options] [<command>] [arguments]
 ```
@@ -300,6 +300,7 @@ Optional elements are shown in brackets []. For example, command may take a list
 - `--prune` - prune during fetch
 - `--git-quiet` - pass quite to git commands (not everything is suppressed)
 - `--skip-dolast` - do not run doLast commends (useful in CI environments where some setup is not wanted)
+- `--skip-drs` - do not configure or fetch DRS repositories (useful in CI environments where DRS assets are not needed)
 
 #### Options for development/testing
 
@@ -457,6 +458,16 @@ This hook is called with the project name as the first argument (`$1`). You can 
 ```bash
 export INSTALLER_CLASSIFIER="/path/to/my_custom_classifier.sh"
 ```
+
+### DRS (Directory Revision Storage) Support
+
+**installer** has automated support for [drs](https://github.com/bvarnai/drs) repositories.
+
+If a repository being installed or updated contains a `drs.json` configuration file in its root, the installer will:
+1. **Activate local Git aliases**: Automatically execute the DRS `install.sh` script to set up local Git aliases (`git drs-*`) for that specific repository.
+2. **Retrieve directory contents**: Automatically execute the DRS `get.sh` script to download or update the actual directory contents (e.g. `data/` folder) associated with the current commit metadata.
+
+To resolve the location of the DRS installation, the installer relies on the **`DRS_HOME`** environment variable (which must point to the directory containing the DRS source scripts).
 
 ### Commands
 
