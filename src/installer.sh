@@ -476,7 +476,7 @@ function configure_drs()
     
     # 1. Install/activate aliases locally in this repo
     log "Activating DRS aliases..."
-    if ! DRS_HOME="${drs_home}" bash "${drs_home}/install.sh"; then
+    if ! DRS_HOME="${drs_home}" bash "${drs_home}/install.sh" --quiet; then
       err "Failed to activate DRS aliases"
     fi
 
