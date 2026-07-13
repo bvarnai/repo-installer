@@ -1,6 +1,6 @@
 # installer - a configuration based repository installer
 
-![CI badge](https://github.com/bvarnai/respository-installer/actions/workflows/ci.yml/badge.svg)
+![CI badge](https://github.com/bvarnai/repo-installer/actions/workflows/ci.yml/badge.svg)
 
 **installer** is a tool to help users to work with multiple *Git* repositories from the initial clone to getting updates.
 
@@ -175,7 +175,7 @@ Branches are simply folders like `main`, `master` etc.
 Next get the **installer** with `curl` for the first time:
 
 ```bash
-curl -L https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/installer.sh -o installer.sh && chmod +x installer.sh
+curl -L https://raw.githubusercontent.com/bvarnai/repo-installer/main/src/installer.sh -o installer.sh && chmod +x installer.sh
 ```
 
 Finally run **installer** in the current working directory:
@@ -319,8 +319,8 @@ pipeline {
     environment {
 
         // installer configuration
-        INSTALLER_SELF_URL = 'https://raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/installer.sh'
-        INSTALLER_CONFIG_URL = 'https://raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/projects.json'
+        INSTALLER_SELF_URL = 'https://raw.githubusercontent.com/bvarnai/repo-installer/#branch#/src/installer.sh'
+        INSTALLER_CONFIG_URL = 'https://raw.githubusercontent.com/bvarnai/repo-installer/#branch#/src/projects.json'
 
         // use a directory outside of job's workspace
         SHARED_WORKSPACE = "${WORKSPACE}/../shared_workspace"

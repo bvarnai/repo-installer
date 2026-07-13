@@ -6,8 +6,8 @@
 # shellcheck disable=SC2034
 INSTALLER_VERSION="2.8.2"
 
-declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://#token#@raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/installer.sh'}
-declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://#token#@raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/projects.json'}
+declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://#token#@raw.githubusercontent.com/bvarnai/repo-installer/#branch#/src/installer.sh'}
+declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://#token#@raw.githubusercontent.com/bvarnai/repo-installer/#branch#/src/projects.json'}
 declare -r INSTALLER_CONFIG_TOKEN=${INSTALLER_CONFIG_TOKEN:-''}
 declare -r INSTALLER_DEFAULT_BRANCH=${INSTALLER_DEFAULT_BRANCH:-'main'}
 declare -r INSTALLER_CONFIG_SCM=${INSTALLER_CONFIG_SCM:-'github'}
@@ -170,7 +170,7 @@ function help()
   echo "      --skip-dolast               do not run doLast commands"; \
   echo "      --skip-drs                  do not configure or fetch DRS repositories"; \
   echo ""; \
-  echo "More information visit https://github.com/bvarnai/respository-installer" 1>&2; exit 0;
+  echo "More information visit https://github.com/bvarnai/repo-installer" 1>&2; exit 0;
 }
 
 #######################################
