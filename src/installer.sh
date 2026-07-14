@@ -4,7 +4,7 @@
 # Constants
 # Important: only single digits are supported due to lexical comparsion
 # shellcheck disable=SC2034
-INSTALLER_VERSION="2.9.1"
+INSTALLER_VERSION="2.9.2"
 
 declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://#token#@raw.githubusercontent.com/bvarnai/repo-installer/#branch#/src/installer.sh'}
 declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://#token#@raw.githubusercontent.com/bvarnai/repo-installer/#branch#/src/projects.json'}
