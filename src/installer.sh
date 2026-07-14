@@ -4,7 +4,7 @@
 # Constants
 # Important: only single digits are supported due to lexical comparsion
 # shellcheck disable=SC2034
-INSTALLER_VERSION="2.9.0"
+INSTALLER_VERSION="2.9.1"
 
 declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://#token#@raw.githubusercontent.com/bvarnai/repo-installer/#branch#/src/installer.sh'}
 declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://#token#@raw.githubusercontent.com/bvarnai/repo-installer/#branch#/src/projects.json'}
@@ -247,6 +247,9 @@ function install_project()
   local update
   update=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".update")
 
+  local submodules
+  submodules=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".submodules?")
+
   local rebase
   rebase=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".rebase?")
   if [[ "${rebase}" == "null" ]]; then
@@ -367,6 +370,14 @@ function install_project()
       else
         log "Skipping reset"
       fi
+
+      if [[ "${submodules}" == "true" ]]; then
+        log "Updating submodules"
+        if ! git submodule update --init --recursive $quite; then
+          err "Unable to update submodules"
+          exit 1
+        fi
+      fi
       clone=0
       popd > /dev/null || exit
     else
@@ -416,6 +427,14 @@ function install_project()
     if ! git remote set-url --push origin "${pushURL}"; then
       err "Unable to set remote push URL"
       exit 1
+    fi
+
+    if [[ "${submodules}" == "true" ]]; then
+      log "Initializing submodules"
+      if ! git submodule update --init --recursive $quite; then
+        err "Unable to initialize submodules"
+        exit 1
+      fi
     fi
 
     # display where we are now
