@@ -371,7 +371,7 @@ function install_project()
         log "Skipping reset"
       fi
 
-      if [[ "${submodules}" == "true" ]]; then
+      if [[ "${update}" == "true" && "${submodules}" == "true" ]]; then
         log "Updating submodules"
         if ! git submodule update --init --recursive $quite; then
           err "Unable to update submodules"
