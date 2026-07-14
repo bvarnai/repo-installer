@@ -280,6 +280,7 @@ The configuration file is called `projects.json` and it's downloaded using the `
 - Different `fetch` and `push` URLs can be used to reduce load in *Git* hosting server, for example use `https` for `fetch` and `ssh` for `push`
 - Setting `update==false` means repositories are fetched but not updated. This is desirable for development projects, so working branches are felt unchanged
 - :warning: Setting `update==true` means repositories are fetched, reset and updated. This also means the branch will be switched to the default branch
+- Setting `submodules==true` will recursively initialize submodules on the initial clone. During updates, submodules are only updated if `update==true` is also enabled. If `update==false`, submodules are left unchanged to prevent overwriting active developer work.
 
 :bulb: You can use a bootstrap project to host your DevOps scripts etc. for example doLast scripts
 
