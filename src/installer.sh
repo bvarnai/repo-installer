@@ -534,6 +534,8 @@ function gitConfig()
     log "Setting git config(s)"
     pushd "${path}" > /dev/null || exit
     while IFS= read -r gitConfig; do
+      # strip trailing carriage return if present (e.g. from Windows CRLF)
+      gitConfig="${gitConfig%$'\r'}"
       # split string by whitespace to key-value pairs
       local keyValue
       # shellcheck disable=SC2206
@@ -1192,8 +1194,8 @@ function list_projects()
   length=$("${INSTALLER_JQ}" -r '.projects | length' projects.json)
   for ((i = 0 ; i < "${length}" ; i++)); do
     # to impove performance read all values once
-    local currentProjectConfiguration
     currentProjectConfiguration=$("${INSTALLER_JQ}" -r ".projects[${i}] | [.name, .category, .default, .path?] | join(\",\")" projects.json)
+    currentProjectConfiguration="${currentProjectConfiguration%$'\r'}"
     local currentProjectConfigurationArray
     IFS=',' read -r -a currentProjectConfigurationArray <<< "${currentProjectConfiguration}"
 
