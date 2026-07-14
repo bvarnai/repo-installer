@@ -247,6 +247,9 @@ function install_project()
   local update
   update=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".update")
 
+  local submodules
+  submodules=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".submodules?")
+
   local rebase
   rebase=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".rebase?")
   if [[ "${rebase}" == "null" ]]; then
@@ -367,6 +370,14 @@ function install_project()
       else
         log "Skipping reset"
       fi
+
+      if [[ "${submodules}" == "true" ]]; then
+        log "Updating submodules"
+        if ! git submodule update --init --recursive $quite; then
+          err "Unable to update submodules"
+          exit 1
+        fi
+      fi
       clone=0
       popd > /dev/null || exit
     else
@@ -416,6 +427,14 @@ function install_project()
     if ! git remote set-url --push origin "${pushURL}"; then
       err "Unable to set remote push URL"
       exit 1
+    fi
+
+    if [[ "${submodules}" == "true" ]]; then
+      log "Initializing submodules"
+      if ! git submodule update --init --recursive $quite; then
+        err "Unable to initialize submodules"
+        exit 1
+      fi
     fi
 
     # display where we are now

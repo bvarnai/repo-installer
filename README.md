@@ -243,6 +243,7 @@ The configuration file is called `projects.json` and it's downloaded using the `
       ],
       "branch": "master",
       "update": "true",
+      "submodules": "true",
       "doLast": [
         "./do_something.sh"
       ]
@@ -268,6 +269,7 @@ The configuration file is called `projects.json` and it's downloaded using the `
 |                | branch                   |       | Default branch |
 |                | update                   |       | Whether to force the repository update and reset to latest on the default branch |
 |                | use_classifier           |       | Whether to dynamically add platform/classifier suffix/placeholder to git URL *[optional]* |
+|                | submodules               |       | Whether to recursively initialize and update Git submodules *[optional]* |
 |                | doLast                   |       | Array of shell commands to execute after repository update *[optional]* |
 
 
