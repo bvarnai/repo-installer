@@ -32,6 +32,7 @@ declare -r INSTALLER_CLASSIFIER=${INSTALLER_CLASSIFIER:-'user_classifier'}
 # Globals:
 #   INSTALLER_JQ - the jq executable
 #   INSTALLER_CURL - the curl executable
+#   INSTALLER_GIT_DREV - the git-drev executable
 # Arguments:
 #   None
 # Returns:
@@ -168,7 +169,7 @@ function help()
   echo "      --prune                     prune during fetch"; \
   echo "      --git-quiet                 run git commands with '--quite' option"; \
   echo "      --skip-dolast               do not run doLast commands"; \
-  echo "      --skip-drs                  do not configure or fetch DRS repositories"; \
+  echo "      --skip-git-drev             do not synchronize git-drev repositories"; \
   echo ""; \
   echo "More information visit https://github.com/bvarnai/repo-installer" 1>&2; exit 0;
 }
@@ -185,7 +186,7 @@ function help()
 #   $7 - git --quite option
 #   $8 - git --prune option
 #   $9 - skip doLast
-#   $10 - skip DRS
+#   $10 - skip git-drev
 # Returns:
 #   None
 #######################################
@@ -200,7 +201,7 @@ function install_project()
   local gitQuiet="$7"
   local gitPrune="$8"
   local skipDoLast="$9"
-  local skipDrs="${10:-0}"
+  local skipGitDrev="${10:-0}"
 
   local project
   project=$(echo "${configuration}" | "${INSTALLER_JQ}" -r '.name')
@@ -444,65 +445,55 @@ function install_project()
     popd > /dev/null || exit
   fi
 
-  configure_drs "${path}" "${skipDrs}"
+  configure_git_drev "${path}" "${skipGitDrev}"
 
   gitConfig "${configuration}"
   doLast "${configuration}" "${skipDoLast}"
 }
 
 #######################################
-# Resolves the path to the DRS src directory.
+# Checks whether the repository has a git-drev configuration file.
 # Arguments:
-#   None
+#   $1 - the path to the repository directory
 # Returns:
-#   Path to DRS src directory, or empty if not found.
+#   0 if a git-drev repo config exists, 1 otherwise.
 #######################################
-function resolve_drs_home()
+function is_git_drev_repo()
 {
-  if [[ -n "${DRS_HOME:-}" && -d "${DRS_HOME}" ]]; then
-    echo "${DRS_HOME}"
-  else
-    echo ""
-  fi
+  local repo_path="$1"
+  [[ -f "${repo_path}/.git-drev.yaml" || \
+     -f "${repo_path}/.git-drev.yml" || \
+     -f "${repo_path}/.git-drev/config.yaml" || \
+     -f "${repo_path}/.git-drev/config.yml" ]]
 }
 
 #######################################
-# Configures and updates DRS if the repository has drs.json.
+# Synchronizes git-drev directory revision if the repository uses git-drev.
 # Arguments:
 #   $1 - the path to the repository directory
-#   $2 - skip DRS (0/1)
+#   $2 - skip git-drev (0/1)
 # Returns:
 #   None
 #######################################
-function configure_drs()
+function configure_git_drev()
 {
   local repo_path="$1"
-  local skip_drs="${2:-0}"
-  if [[ -f "${repo_path}/drs.json" ]]; then
-    if [[ "${skip_drs}" == 1 ]]; then
-      log "Skipping DRS configuration for '${repo_path}'"
+  local skip_git_drev="${2:-0}"
+  if is_git_drev_repo "${repo_path}"; then
+    if [[ "${skip_git_drev}" == 1 ]]; then
+      log "Skipping git-drev synchronization for '${repo_path}'"
       return
     fi
-    log "DRS repository detected at '${repo_path}'"
-    local drs_home
-    drs_home=$(resolve_drs_home)
-    if [[ -z "${drs_home}" ]]; then
-      log "drs.json found, but DRS_HOME is not set. Skipping DRS configuration."
+    log "git-drev repository detected at '${repo_path}'"
+    if [[ -z "${INSTALLER_GIT_DREV:-}" ]] || ! "${INSTALLER_GIT_DREV}" --version >/dev/null 2>&1; then
+      log "git-drev configuration found, but git-drev is not installed. Skipping git-drev synchronization."
       return
     fi
-    log "Using DRS_HOME: ${drs_home}"
     pushd "${repo_path}" > /dev/null || exit
-    
-    # 1. Install/activate aliases locally in this repo
-    log "Activating DRS aliases..."
-    if ! DRS_HOME="${drs_home}" bash "${drs_home}/install.sh" --quiet; then
-      err "Failed to activate DRS aliases"
-    fi
 
-    # 2. Get/update the directory contents
-    log "Fetching DRS directory revision..."
-    if ! DRS_HOME="${drs_home}" bash "${drs_home}/get.sh"; then
-      err "Failed to fetch DRS directory revision"
+    log "Fetching git-drev directory revision..."
+    if ! "${INSTALLER_GIT_DREV}" get; then
+      err "Failed to fetch git-drev directory revision"
     fi
     popd > /dev/null || exit
   fi
@@ -838,6 +829,23 @@ function set_curl_default()
 }
 
 #######################################
+# Set default GIT_DREV if available.
+# Globals:
+#   INSTALLER_GIT_DREV - the git-drev executable
+# Arguments:
+#   None
+# Returns:
+#   None
+#######################################
+function set_git_drev_default()
+{
+  # check if git-drev is available on the path
+  if [[ -z "${INSTALLER_GIT_DREV:-}" ]] && git-drev --version >/dev/null 2>&1; then
+    INSTALLER_GIT_DREV='git-drev'
+  fi
+}
+
+#######################################
 # Call curl with optional authentication.
 # Arguments:
 #   TBD
@@ -936,7 +944,7 @@ function main()
   local gitQuiet
   local gitPrune
   local skipDoLast
-  local skipDrs
+  local skipGitDrev
   yes=0
   list=0
   update=0
@@ -952,7 +960,7 @@ function main()
   gitQuiet=0
   gitPrune=0
   skipDoLast=0
-  skipDrs=0
+  skipGitDrev=0
   params=
   while (( "$#" )); do
     case "$1" in
@@ -1021,8 +1029,8 @@ function main()
         skipDoLast=1
         shift
         ;;
-      --skip-drs)
-        skipDrs=1
+      --skip-git-drev)
+        skipGitDrev=1
         shift
         ;;
       --) # end argument parsing
@@ -1177,7 +1185,7 @@ function main()
     # trim name
     projectName=$(echo "${projectName}" | xargs)
     find_project_by_name "${projectName}"
-    install_project "${INSTALLER_LAST_RETURN}" "${projectBranchSet}" "${projectBranch}" "${cloneOptionsSet}" "${cloneOptions}" "${fetchAll}" "${gitQuiet}" "${gitPrune}" "${skipDoLast}" "${skipDrs}"
+    install_project "${INSTALLER_LAST_RETURN}" "${projectBranchSet}" "${projectBranch}" "${cloneOptionsSet}" "${cloneOptions}" "${fetchAll}" "${gitQuiet}" "${gitPrune}" "${skipDoLast}" "${skipGitDrev}"
   done
 }
 
@@ -1428,7 +1436,7 @@ function process_updater_arguments()
       --skip-dolast) # skip ahead
         shift
         ;;
-      --skip-drs) # skip ahead
+      --skip-git-drev) # skip ahead
         shift
         ;;
       --) # end argument parsing
@@ -1483,6 +1491,7 @@ function updater()
 # bootstapping
 set_jq_default
 set_curl_default
+set_git_drev_default
 
 if [[ -n ${INSTALLER_GET_DEPENDENCIES} ]]; then
   # get user specific dependencies
