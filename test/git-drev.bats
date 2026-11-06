@@ -10,10 +10,6 @@ setup() {
     export INSTALLER_CONFIG_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/#branch#/projects.json"
     export INSTALLER_SELF_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/installer.sh"
     export INSTALLER_CONFIG_SCM='plain'
-
-    # Ensure git user identity is set in case test environment doesn't have it
-    git config --global user.name "Test User"
-    git config --global user.email "test@example.com"
 }
 
 create_mock_git_drev() {
