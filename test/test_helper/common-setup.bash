@@ -27,6 +27,12 @@ _common_setup() {
 
     export TEST_FILE_TMPDIR
 
+    # Isolate global git configuration to the temporary test directory
+    export GIT_CONFIG_GLOBAL="$TEST_FILE_TMPDIR/.gitconfig"
+    touch "$GIT_CONFIG_GLOBAL"
+    git config --global user.name "Test User"
+    git config --global user.email "test@example.com"
+
     # start configuration server
     $TEST_SERVER_EXECUTABLE --directory-listing --port 8787 --root ./conf &
     echo $! > "$TEST_FILE_TMPDIR/.test-server.pid"

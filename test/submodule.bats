@@ -11,10 +11,6 @@ setup() {
     export INSTALLER_SELF_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/installer.sh"
     export INSTALLER_CONFIG_SCM='plain'
 
-    # Ensure git user identity is set in case test environment doesn't have it
-    git config --global user.name "Test User"
-    git config --global user.email "test@example.com"
-
     # Allow local file protocol for cloning/updating submodules during tests
     git config --global protocol.file.allow always
 }
